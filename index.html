@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>专注计时器</title>
+    <script>
+        (function() {
+            try {
+                var bg = localStorage.getItem('customBackground');
+                if (bg) {
+                    document.documentElement.style.setProperty('--bg-image', 'url(' + bg + ')');
+                    document.documentElement.setAttribute('data-has-bg', '1');
+                }
+            } catch(e) {}
+        })();
+    </script>
     <style>
         * {
             margin: 0;
@@ -43,6 +54,10 @@
             background-image: var(--bg-image);
         }
 
+        :root[data-has-bg='1'] body::before {
+            background-image: var(--bg-image);
+        }
+
         body::after {
             content: '';
             position: fixed;
@@ -53,7 +68,8 @@
             transition: opacity 0.5s;
         }
 
-        body.has-background::after {
+        body.has-background::after,
+        :root[data-has-bg='1'] body::after {
             opacity: 1;
         }
 
@@ -1864,24 +1880,30 @@
         });
     }
 
+    function applyBackground(dataUrl) {
+        document.documentElement.style.setProperty('--bg-image', `url(${dataUrl})`);
+        document.documentElement.setAttribute('data-has-bg', '1');
+        document.body.classList.add('has-background');
+        document.getElementById('btnRemoveBg').style.display = 'inline-block';
+    }
+
+    function removeBackground() {
+        localStorage.removeItem(S.bg);
+        document.documentElement.style.removeProperty('--bg-image');
+        document.documentElement.removeAttribute('data-has-bg');
+        document.body.classList.remove('has-background');
+        document.getElementById('btnRemoveBg').style.display = 'none';
+    }
+
     function loadBackground() {
         try {
             const saved = localStorage.getItem(S.bg);
-            if (saved) {
-                document.body.style.setProperty('--bg-image', `url(${saved})`);
-                document.body.classList.add('has-background');
-                document.getElementById('btnRemoveBg').style.display = 'inline-block';
-            }
+            if (saved) applyBackground(saved);
         } catch(e) {}
     }
 
     document.getElementById('btnUploadBg').addEventListener('click', () => document.getElementById('bgUpload').click());
-    document.getElementById('btnRemoveBg').addEventListener('click', () => {
-        localStorage.removeItem(S.bg);
-        document.body.style.removeProperty('--bg-image');
-        document.body.classList.remove('has-background');
-        document.getElementById('btnRemoveBg').style.display = 'none';
-    });
+    document.getElementById('btnRemoveBg').addEventListener('click', removeBackground);
     document.getElementById('bgUpload').addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -1890,9 +1912,7 @@
             if (res.wasCompressed) showToast('图片已自动压缩');
             try {
                 localStorage.setItem(S.bg, res.dataUrl);
-                document.body.style.setProperty('--bg-image', `url(${res.dataUrl})`);
-                document.body.classList.add('has-background');
-                document.getElementById('btnRemoveBg').style.display = 'inline-block';
+                applyBackground(res.dataUrl);
             } catch(err) {
                 showToast(err.name === 'QuotaExceededError' ? '背景保存失败，请换一张更小的图片' : '背景保存失败');
             }
