@@ -140,6 +140,48 @@
             flex-shrink: 0;
         }
 
+        .market-banner {
+            display: flex;
+            align-items: center;
+            padding: 8px 20px;
+            margin-bottom: 16px;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.15s, box-shadow 0.15s;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .market-banner:hover {
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+        }
+
+        body.has-background .market-banner {
+            background: rgba(255, 255, 255, 0.13);
+            backdrop-filter: blur(16px);
+            color: #fff;
+        }
+
+        body.has-background .market-banner:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .market-banner-text {
+            font-size: 13px;
+            font-weight: 500;
+            color: #444;
+            letter-spacing: 0.1px;
+        }
+
+        body.has-background .market-banner-text {
+            color: rgba(255, 255, 255, 0.92);
+        }
+
         .main-layout {
             display: grid;
             grid-template-columns: 300px 1fr 280px;
@@ -1606,6 +1648,10 @@
         </div>
     </div>
 
+    <div class="market-banner" id="marketBanner">
+        <span class="market-banner-text" id="marketBannerText">📊 今日行情：未查看 ❌</span>
+    </div>
+
     <div class="main-layout">
         <!-- LEFT SIDEBAR -->
         <div class="objects-sidebar">
@@ -1800,9 +1846,11 @@
                 } else {
                     materialCount = 0;
                 }
+                marketChecked = (s.market_checked_date === today && s.market_checked === true);
             } else {
                 todayTop = [];
                 materialCount = 0;
+                marketChecked = false;
             }
 
             localStorage.setItem(S.objects, JSON.stringify(focusObjects));
@@ -1890,11 +1938,28 @@
         } catch(e) {}
     }
 
+    async function cloudUpsertMarket() {
+        const today = getTodayStr();
+        try {
+            await sbFetch('focus_settings', {
+                method: 'POST',
+                headers: { 'Prefer': 'return=minimal,resolution=merge-duplicates', 'on-conflict': 'device_id' },
+                body: JSON.stringify({
+                    device_id: DEVICE_ID,
+                    market_checked: marketChecked,
+                    market_checked_date: today,
+                    updated_at: new Date().toISOString()
+                })
+            });
+        } catch(e) {}
+    }
+
     // DATA
     let focusObjects = [];
     let todayTop = [];
     let records = [];
     let materialCount = 0;
+    let marketChecked = false;
     let activeObjectId = null;
     let timerInterval = null;
     let elapsedSeconds = 0;
@@ -2731,6 +2796,22 @@
     });
 
     // INIT
+    function renderMarketBanner() {
+        const el = document.getElementById('marketBannerText');
+        if (!el) return;
+        if (marketChecked) {
+            el.textContent = '📊 今日行情：已查看 ✅';
+        } else {
+            el.textContent = '📊 今日行情：未查看 ❌';
+        }
+    }
+
+    document.getElementById('marketBanner').addEventListener('click', () => {
+        marketChecked = !marketChecked;
+        renderMarketBanner();
+        cloudUpsertMarket();
+    });
+
     displayCurrentDate();
     loadData();
     renderObjectsList();
@@ -2739,6 +2820,7 @@
     updateTotalDisplay();
     loadBackground();
     loadMaterialCount();
+    renderMarketBanner();
 
     (async () => {
         await ensureDevice();
@@ -2749,6 +2831,7 @@
             renderRecords();
             updateTotalDisplay();
             renderMaterialCounter();
+            renderMarketBanner();
         }
     })();
 
