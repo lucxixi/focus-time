@@ -1449,10 +1449,174 @@
 <div class="toast" id="toast"></div>
 
 <script>
+    // SUPABASE
+    const SUPABASE_URL = 'https://gohvvafbkoznalhzpkkp.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvaHZ2YWZia296bmFsaHpwa2twIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNDUzNzcsImV4cCI6MjA5MTYyMTM3N30.mUOvG12rFxOWa52_k8pAafwngoeWpU1DXTuT4j4-adk';
+
+    function sbFetch(path, opts = {}) {
+        const headers = {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal',
+            ...(opts.headers || {})
+        };
+        return fetch(`${SUPABASE_URL}/rest/v1/${path}`, { ...opts, headers });
+    }
+
+    function getDeviceId() {
+        let id = localStorage.getItem('focusDeviceId');
+        if (!id) {
+            id = 'dev-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
+            localStorage.setItem('focusDeviceId', id);
+        }
+        return id;
+    }
+
+    const DEVICE_ID = getDeviceId();
+
+    async function ensureDevice() {
+        try {
+            await sbFetch('focus_devices', {
+                method: 'POST',
+                headers: { 'Prefer': 'return=minimal,resolution=ignore-duplicates', 'on-conflict': 'device_id' },
+                body: JSON.stringify({ device_id: DEVICE_ID })
+            });
+        } catch(e) {}
+    }
+
+    async function syncFromCloud() {
+        try {
+            const [objRes, recRes, setRes] = await Promise.all([
+                sbFetch(`focus_objects?device_id=eq.${DEVICE_ID}&deleted=eq.false&order=created_at.asc`),
+                sbFetch(`focus_records?device_id=eq.${DEVICE_ID}&order=start_time.desc`),
+                sbFetch(`focus_settings?device_id=eq.${DEVICE_ID}`)
+            ]);
+            if (!objRes.ok || !recRes.ok || !setRes.ok) return false;
+            const [objs, recs, sets] = await Promise.all([objRes.json(), recRes.json(), setRes.json()]);
+
+            focusObjects = objs.map(o => ({
+                id: o.id,
+                name: o.name,
+                icon: o.icon,
+                totalSeconds: o.total_seconds,
+                createdAt: o.created_at
+            }));
+
+            records = recs.map(r => ({
+                id: r.id,
+                objectId: r.object_id,
+                objectName: r.object_name,
+                seconds: r.seconds,
+                note: r.note,
+                startTime: r.start_time,
+                date: r.date
+            }));
+
+            const today = getTodayStr();
+            if (sets.length > 0) {
+                const s = sets[0];
+                todayTop = s.today_top_date === today ? (s.today_top_ids || []) : [];
+                if (s.material_date === today) {
+                    materialCount = s.material_count || 0;
+                } else {
+                    materialCount = 0;
+                }
+            } else {
+                todayTop = [];
+                materialCount = 0;
+            }
+
+            localStorage.setItem(S.objects, JSON.stringify(focusObjects));
+            localStorage.setItem(S.records, JSON.stringify(records));
+            localStorage.setItem(S.todayTop, JSON.stringify({ date: today, ids: todayTop }));
+            localStorage.setItem(MATERIAL_KEY, String(materialCount));
+            localStorage.setItem(MATERIAL_DATE_KEY, today);
+            return true;
+        } catch(e) {
+            return false;
+        }
+    }
+
+    async function cloudUpsertObject(obj) {
+        try {
+            await sbFetch('focus_objects', {
+                method: 'POST',
+                headers: { 'Prefer': 'return=minimal,resolution=merge-duplicates', 'on-conflict': 'id,device_id' },
+                body: JSON.stringify({
+                    id: obj.id,
+                    device_id: DEVICE_ID,
+                    name: obj.name,
+                    icon: obj.icon,
+                    total_seconds: obj.totalSeconds,
+                    created_at: obj.createdAt,
+                    updated_at: new Date().toISOString(),
+                    deleted: false
+                })
+            });
+        } catch(e) {}
+    }
+
+    async function cloudDeleteObject(id) {
+        try {
+            await sbFetch(`focus_objects?id=eq.${id}&device_id=eq.${DEVICE_ID}`, {
+                method: 'PATCH',
+                headers: { 'Prefer': 'return=minimal' },
+                body: JSON.stringify({ deleted: true, updated_at: new Date().toISOString() })
+            });
+        } catch(e) {}
+    }
+
+    async function cloudUpsertRecord(rec) {
+        try {
+            await sbFetch('focus_records', {
+                method: 'POST',
+                headers: { 'Prefer': 'return=minimal,resolution=merge-duplicates', 'on-conflict': 'id,device_id' },
+                body: JSON.stringify({
+                    id: rec.id,
+                    device_id: DEVICE_ID,
+                    object_id: rec.objectId || null,
+                    object_name: rec.objectName,
+                    seconds: rec.seconds,
+                    note: rec.note || '',
+                    start_time: rec.startTime,
+                    date: rec.date
+                })
+            });
+        } catch(e) {}
+    }
+
+    async function cloudDeleteTodayRecords(today) {
+        try {
+            await sbFetch(`focus_records?device_id=eq.${DEVICE_ID}&date=eq.${today}`, {
+                method: 'DELETE'
+            });
+        } catch(e) {}
+    }
+
+    async function cloudUpsertSettings() {
+        const today = getTodayStr();
+        try {
+            await sbFetch('focus_settings', {
+                method: 'POST',
+                headers: { 'Prefer': 'return=minimal,resolution=merge-duplicates', 'on-conflict': 'device_id' },
+                body: JSON.stringify({
+                    device_id: DEVICE_ID,
+                    today_top_date: today,
+                    today_top_ids: todayTop,
+                    material_count: materialCount,
+                    material_date: today,
+                    updated_at: new Date().toISOString()
+                })
+            });
+        } catch(e) {}
+    }
+
     // DATA
     let focusObjects = [];
     let todayTop = [];
     let records = [];
+    let materialCount = 0;
     let activeObjectId = null;
     let timerInterval = null;
     let elapsedSeconds = 0;
@@ -1465,6 +1629,9 @@
         records: 'focusRecords_v2',
         bg: 'customBackground'
     };
+
+    const MATERIAL_KEY = 'materialCount_v1';
+    const MATERIAL_DATE_KEY = 'materialDate_v1';
 
     function getTodayStr() {
         const d = new Date();
@@ -1480,11 +1647,25 @@
         } catch(e) {
             focusObjects = []; records = []; todayTop = [];
         }
+        const savedDate = localStorage.getItem(MATERIAL_DATE_KEY);
+        if (savedDate === getTodayStr()) {
+            materialCount = parseInt(localStorage.getItem(MATERIAL_KEY) || '0', 10);
+        } else {
+            materialCount = 0;
+        }
     }
 
-    function saveObjects() { localStorage.setItem(S.objects, JSON.stringify(focusObjects)); }
-    function saveTodayTop() { localStorage.setItem(S.todayTop, JSON.stringify({ date: getTodayStr(), ids: todayTop })); }
-    function saveRecords() { localStorage.setItem(S.records, JSON.stringify(records)); }
+    function saveObjects() {
+        localStorage.setItem(S.objects, JSON.stringify(focusObjects));
+        focusObjects.forEach(o => cloudUpsertObject(o));
+    }
+    function saveTodayTop() {
+        localStorage.setItem(S.todayTop, JSON.stringify({ date: getTodayStr(), ids: todayTop }));
+        cloudUpsertSettings();
+    }
+    function saveRecords() {
+        localStorage.setItem(S.records, JSON.stringify(records));
+    }
 
     function escapeHtml(s) {
         return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -1699,7 +1880,9 @@
             activeObjectId = null;
             document.getElementById('timerObjectName').textContent = '选择一个事项开始';
         }
-        saveObjects(); saveTodayTop();
+        localStorage.setItem(S.objects, JSON.stringify(focusObjects));
+        cloudDeleteObject(id);
+        saveTodayTop();
         renderObjectsList(); renderTodayTop();
     }
 
@@ -1783,7 +1966,7 @@
         const obj = focusObjects.find(o => o.id === activeObjectId);
         const note = document.getElementById('sessionNote').value.trim();
         if (obj) { obj.totalSeconds = (obj.totalSeconds || 0) + elapsedSeconds; saveObjects(); }
-        records.unshift({
+        const newRec = {
             id: Date.now().toString(),
             objectId: activeObjectId,
             objectName: obj ? obj.name : '未知',
@@ -1791,8 +1974,10 @@
             note,
             startTime: sessionStartTime ? sessionStartTime.toISOString() : new Date().toISOString(),
             date: getTodayStr()
-        });
+        };
+        records.unshift(newRec);
         saveRecords();
+        cloudUpsertRecord(newRec);
         isRunning = false; clearInterval(timerInterval);
         const dur = elapsedSeconds;
         elapsedSeconds = 0; sessionStartTime = null;
@@ -1847,7 +2032,9 @@
     document.getElementById('btnClearRecords').addEventListener('click', () => {
         const today = getTodayStr();
         records = records.filter(r => r.date !== today);
-        saveRecords(); renderRecords(); updateTotalDisplay();
+        saveRecords();
+        cloudDeleteTodayRecords(today);
+        renderRecords(); updateTotalDisplay();
         showToast('今日记录已清空');
     });
 
@@ -2070,7 +2257,7 @@
         overlay.querySelector('#qsModalStop').addEventListener('click', () => {
             document.body.removeChild(overlay);
             const dur = elapsedSeconds;
-            records.unshift({
+            const quickRec = {
                 id: Date.now().toString(),
                 objectId: '__quick__',
                 objectName: '启动中',
@@ -2078,8 +2265,10 @@
                 note: '快速启动记录',
                 startTime: sessionStartTime ? sessionStartTime.toISOString() : new Date().toISOString(),
                 date: getTodayStr()
-            });
+            };
+            records.unshift(quickRec);
             saveRecords();
+            cloudUpsertRecord(quickRec);
             elapsedSeconds = 0;
             sessionStartTime = null;
             cancelQuickMode();
@@ -2095,26 +2284,15 @@
 
     // MATERIAL COUNTER
     const MATERIAL_TARGET = 3;
-    const MATERIAL_KEY = 'materialCount_v1';
-    const MATERIAL_DATE_KEY = 'materialDate_v1';
-
-    let materialCount = 0;
 
     function loadMaterialCount() {
-        const savedDate = localStorage.getItem(MATERIAL_DATE_KEY);
-        if (savedDate === getTodayStr()) {
-            materialCount = parseInt(localStorage.getItem(MATERIAL_KEY) || '0', 10);
-        } else {
-            materialCount = 0;
-            localStorage.setItem(MATERIAL_DATE_KEY, getTodayStr());
-            localStorage.setItem(MATERIAL_KEY, '0');
-        }
         renderMaterialCounter();
     }
 
     function saveMaterialCount() {
         localStorage.setItem(MATERIAL_KEY, String(materialCount));
         localStorage.setItem(MATERIAL_DATE_KEY, getTodayStr());
+        cloudUpsertSettings();
     }
 
     function renderMaterialCounter() {
@@ -2187,6 +2365,18 @@
     updateTotalDisplay();
     loadBackground();
     loadMaterialCount();
+
+    (async () => {
+        await ensureDevice();
+        const ok = await syncFromCloud();
+        if (ok) {
+            renderObjectsList();
+            renderTodayTop();
+            renderRecords();
+            updateTotalDisplay();
+            renderMaterialCounter();
+        }
+    })();
 
     setInterval(() => {
         const d = new Date();
