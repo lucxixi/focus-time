@@ -35,14 +35,20 @@
   - 今天、昨天自动显示中文标签
   - 支持 Esc 或点击遮罩关闭
 
-### 5. 个性化背景
+### 5. 今日行情提醒
+
+- 标题下方常驻一条行情状态横条
+- 默认显示「未查看 ❌」，点击整行切换为「已查看 ✅」，可再次点击切回
+- 状态与日期绑定，每天重置；数据通过 Supabase 云端同步
+
+### 6. 个性化背景
 
 - 支持上传自定义背景图片
 - 背景保存在本地，刷新后依然保留
 - 可一键恢复默认背景
 - 背景图模式下界面自动切换为暗色半透明风格
 
-### 6. 响应式缩放适配
+### 7. 响应式缩放适配
 
 - 基于 1200px 设计稿整体等比缩放
 - 适配 Notion 等外部平台嵌入场景
@@ -62,7 +68,10 @@
 ├── index.html                          # 主页面（HTML / CSS / JS）
 ├── package.json
 ├── supabase/
-│   └── migrations/                     # 数据库迁移文件
+│   └── migrations/
+│       ├── 20260413074208_focus_timer_persistence.sql
+│       ├── 20260413080541_add_market_checked_to_settings.sql
+│       └── add_market_checked_to_settings.sql
 └── README.md
 ```
 
