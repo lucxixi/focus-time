@@ -1095,6 +1095,207 @@
         body.has-background .quick-countdown-bar {
             background: rgba(255,255,255,0.15);
         }
+
+        /* MATERIAL COUNTER */
+        .material-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 16px 18px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+            transition: all 0.3s ease;
+        }
+
+        .material-card.dimmed {
+            opacity: 0.45;
+        }
+
+        .material-card.done {
+            background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
+            border: 1.5px solid #81c784;
+        }
+
+        body.has-background .material-card {
+            background: rgba(255,255,255,0.12);
+            backdrop-filter: blur(8px);
+        }
+
+        body.has-background .material-card.done {
+            background: rgba(129,199,132,0.2);
+        }
+
+        .material-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .material-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        body.has-background .material-label {
+            color: rgba(255,255,255,0.55);
+        }
+
+        .btn-material-reset {
+            background: none;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 11px;
+            color: #aaa;
+            cursor: pointer;
+            padding: 2px 8px;
+            transition: all 0.18s;
+            font-family: inherit;
+        }
+
+        .btn-material-reset:hover {
+            border-color: #bbb;
+            color: #666;
+        }
+
+        body.has-background .btn-material-reset {
+            border-color: rgba(255,255,255,0.25);
+            color: rgba(255,255,255,0.5);
+        }
+
+        .material-counter-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .material-count-display {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+        }
+
+        .material-current {
+            font-size: 36px;
+            font-weight: 800;
+            color: #333;
+            line-height: 1;
+            transition: color 0.3s, transform 0.15s;
+        }
+
+        .material-current.bump {
+            transform: scale(1.25);
+        }
+
+        .material-current.done-color {
+            color: #43a047;
+        }
+
+        body.has-background .material-current {
+            color: rgba(255,255,255,0.95);
+        }
+
+        .material-sep {
+            font-size: 22px;
+            color: #ccc;
+            font-weight: 300;
+        }
+
+        body.has-background .material-sep {
+            color: rgba(255,255,255,0.3);
+        }
+
+        .material-target {
+            font-size: 22px;
+            color: #bbb;
+            font-weight: 500;
+        }
+
+        body.has-background .material-target {
+            color: rgba(255,255,255,0.4);
+        }
+
+        .btn-material-add {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #1976d2;
+            color: #fff;
+            border: none;
+            font-size: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.18s;
+            box-shadow: 0 3px 10px rgba(25,118,210,0.3);
+            font-family: inherit;
+            flex-shrink: 0;
+        }
+
+        .btn-material-add:hover {
+            background: #1565c0;
+            transform: scale(1.08);
+            box-shadow: 0 4px 14px rgba(25,118,210,0.4);
+        }
+
+        .btn-material-add:active {
+            transform: scale(0.95);
+        }
+
+        .btn-material-add:disabled {
+            background: #81c784;
+            cursor: default;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .material-progress-track {
+            width: 100%;
+            height: 6px;
+            background: #f0f0f0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        body.has-background .material-progress-track {
+            background: rgba(255,255,255,0.15);
+        }
+
+        .material-progress-fill {
+            height: 100%;
+            background: #1976d2;
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.4s cubic-bezier(0.34,1.56,0.64,1), background 0.3s;
+        }
+
+        .material-progress-fill.done {
+            background: #43a047;
+            width: 100% !important;
+        }
+
+        .material-tip {
+            font-size: 12px;
+            color: #43a047;
+            font-weight: 600;
+            min-height: 18px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .material-tip.visible {
+            opacity: 1;
+        }
+
+        body.has-background .material-tip {
+            color: #a5d6a7;
+        }
     </style>
 </head>
 <body>
@@ -1175,6 +1376,26 @@
                 <h3>今日专注</h3>
                 <div class="stats-total" id="totalDisplay">0h 0m</div>
                 <div class="stats-label">累计专注时间</div>
+            </div>
+
+            <!-- MATERIAL COUNTER -->
+            <div class="material-card" id="materialCard">
+                <div class="material-header">
+                    <span class="material-label">今日素材</span>
+                    <button class="btn-material-reset" id="btnMaterialReset" title="重置">重置</button>
+                </div>
+                <div class="material-counter-row">
+                    <div class="material-count-display">
+                        <span class="material-current" id="materialCount">0</span>
+                        <span class="material-sep">/</span>
+                        <span class="material-target">3</span>
+                    </div>
+                    <button class="btn-material-add" id="btnMaterialAdd">+1</button>
+                </div>
+                <div class="material-progress-track">
+                    <div class="material-progress-fill" id="materialProgressFill"></div>
+                </div>
+                <div class="material-tip" id="materialTip"></div>
             </div>
 
             <div class="records-card">
@@ -1452,6 +1673,7 @@
         const obj = focusObjects.find(o => o.id === id);
         document.getElementById('timerObjectName').textContent = obj ? obj.name : '';
         renderObjectsList();
+        renderMaterialCounter();
     }
 
     // TIMER
@@ -1831,6 +2053,91 @@
 
     btnQuickStart.addEventListener('click', startQuickTimer);
 
+    // MATERIAL COUNTER
+    const MATERIAL_TARGET = 3;
+    const MATERIAL_KEY = 'materialCount_v1';
+    const MATERIAL_DATE_KEY = 'materialDate_v1';
+
+    let materialCount = 0;
+
+    function loadMaterialCount() {
+        const savedDate = localStorage.getItem(MATERIAL_DATE_KEY);
+        if (savedDate === getTodayStr()) {
+            materialCount = parseInt(localStorage.getItem(MATERIAL_KEY) || '0', 10);
+        } else {
+            materialCount = 0;
+            localStorage.setItem(MATERIAL_DATE_KEY, getTodayStr());
+            localStorage.setItem(MATERIAL_KEY, '0');
+        }
+        renderMaterialCounter();
+    }
+
+    function saveMaterialCount() {
+        localStorage.setItem(MATERIAL_KEY, String(materialCount));
+        localStorage.setItem(MATERIAL_DATE_KEY, getTodayStr());
+    }
+
+    function renderMaterialCounter() {
+        const card = document.getElementById('materialCard');
+        const countEl = document.getElementById('materialCount');
+        const fill = document.getElementById('materialProgressFill');
+        const tip = document.getElementById('materialTip');
+        const addBtn = document.getElementById('btnMaterialAdd');
+        const activeObj = focusObjects.find(o => o.id === activeObjectId);
+        const isMaterialTask = activeObj && activeObj.name.includes('找素材');
+
+        if (isMaterialTask) {
+            card.classList.remove('dimmed');
+        } else {
+            card.classList.add('dimmed');
+        }
+
+        countEl.textContent = materialCount;
+        const isDone = materialCount >= MATERIAL_TARGET;
+        const pct = Math.min(materialCount / MATERIAL_TARGET, 1) * 100;
+
+        fill.style.width = isDone ? '100%' : `${pct}%`;
+        fill.classList.toggle('done', isDone);
+
+        countEl.classList.toggle('done-color', isDone);
+        card.classList.toggle('done', isDone);
+
+        addBtn.disabled = isDone;
+
+        if (isDone) {
+            tip.textContent = '已完成本次素材采集，建议退出抖音';
+            tip.classList.add('visible');
+        } else {
+            tip.textContent = '';
+            tip.classList.remove('visible');
+        }
+    }
+
+    function updateMaterialVisibility() {
+        renderMaterialCounter();
+    }
+
+    document.getElementById('btnMaterialAdd').addEventListener('click', () => {
+        if (materialCount >= MATERIAL_TARGET) return;
+        materialCount++;
+        saveMaterialCount();
+
+        const countEl = document.getElementById('materialCount');
+        countEl.classList.remove('bump');
+        void countEl.offsetWidth;
+        countEl.classList.add('bump');
+        setTimeout(() => countEl.classList.remove('bump'), 200);
+
+        renderMaterialCounter();
+    });
+
+    document.getElementById('btnMaterialReset').addEventListener('click', () => {
+        materialCount = 0;
+        saveMaterialCount();
+        renderMaterialCounter();
+    });
+
+
     // INIT
     displayCurrentDate();
     loadData();
@@ -1839,6 +2146,7 @@
     renderRecords();
     updateTotalDisplay();
     loadBackground();
+    loadMaterialCount();
 
     setInterval(() => {
         const d = new Date();
