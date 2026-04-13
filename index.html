@@ -1330,6 +1330,265 @@
         body.has-background .material-tip {
             color: #a5d6a7;
         }
+        /* HISTORY DRAWER */
+        .history-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+        .history-overlay.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+        .history-drawer {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 420px;
+            max-width: 96vw;
+            height: 100vh;
+            background: #fff;
+            box-shadow: -4px 0 32px rgba(0,0,0,0.15);
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            transform: translateX(100%);
+            transition: transform 0.28s cubic-bezier(.4,0,.2,1);
+        }
+        body.has-background .history-drawer {
+            background: rgba(24,26,32,0.97);
+        }
+        .history-overlay.open .history-drawer {
+            transform: translateX(0);
+        }
+        .history-drawer-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            flex-shrink: 0;
+        }
+        body.has-background .history-drawer-header {
+            border-bottom-color: rgba(255,255,255,0.1);
+        }
+        .history-drawer-header h2 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        body.has-background .history-drawer-header h2 {
+            color: rgba(255,255,255,0.9);
+        }
+        .btn-close-history {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            color: #aaa;
+            line-height: 1;
+            padding: 4px;
+            border-radius: 6px;
+            transition: background 0.15s, color 0.15s;
+        }
+        .btn-close-history:hover {
+            background: #f0f0f0;
+            color: #555;
+        }
+        body.has-background .btn-close-history:hover {
+            background: rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.8);
+        }
+        .history-filter-bar {
+            padding: 12px 24px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        body.has-background .history-filter-bar {
+            border-bottom-color: rgba(255,255,255,0.1);
+        }
+        .history-filter-label {
+            font-size: 12px;
+            color: #999;
+            white-space: nowrap;
+        }
+        body.has-background .history-filter-label {
+            color: rgba(255,255,255,0.4);
+        }
+        .history-date-input {
+            flex: 1;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 13px;
+            color: #333;
+            background: #fafafa;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        .history-date-input:focus {
+            border-color: #4a90d9;
+        }
+        body.has-background .history-date-input {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.15);
+            color: rgba(255,255,255,0.85);
+        }
+        .btn-history-filter {
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: none;
+            background: #4a90d9;
+            color: #fff;
+            font-size: 12px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.15s;
+        }
+        .btn-history-filter:hover { background: #357abd; }
+        .btn-history-all {
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            background: none;
+            color: #666;
+            font-size: 12px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.15s;
+        }
+        .btn-history-all:hover { background: #f5f5f5; }
+        body.has-background .btn-history-all {
+            border-color: rgba(255,255,255,0.15);
+            color: rgba(255,255,255,0.6);
+        }
+        body.has-background .btn-history-all:hover {
+            background: rgba(255,255,255,0.08);
+        }
+        .history-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 0 24px;
+        }
+        .history-day-group {
+            margin-bottom: 4px;
+        }
+        .history-day-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 10px 24px 6px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        body.has-background .history-day-title {
+            color: rgba(255,255,255,0.35);
+        }
+        .history-day-total {
+            font-size: 11px;
+            color: #4a90d9;
+            font-weight: 600;
+        }
+        body.has-background .history-day-total {
+            color: rgba(120,180,255,0.75);
+        }
+        .history-record-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 8px 24px;
+            transition: background 0.12s;
+        }
+        .history-record-item:hover {
+            background: #f8f8f8;
+        }
+        body.has-background .history-record-item:hover {
+            background: rgba(255,255,255,0.05);
+        }
+        .history-record-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #4a90d9;
+            margin-top: 6px;
+            flex-shrink: 0;
+        }
+        .history-record-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .history-record-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #2c2c2c;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        body.has-background .history-record-name {
+            color: rgba(255,255,255,0.85);
+        }
+        .history-record-meta {
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 1px;
+        }
+        body.has-background .history-record-meta {
+            color: rgba(255,255,255,0.35);
+        }
+        .history-record-note {
+            font-size: 11px;
+            color: #888;
+            margin-top: 2px;
+            font-style: italic;
+        }
+        body.has-background .history-record-note {
+            color: rgba(255,255,255,0.4);
+        }
+        .history-record-dur {
+            font-size: 12px;
+            font-weight: 600;
+            color: #555;
+            white-space: nowrap;
+            flex-shrink: 0;
+            margin-top: 3px;
+        }
+        body.has-background .history-record-dur {
+            color: rgba(255,255,255,0.5);
+        }
+        .history-empty {
+            text-align: center;
+            padding: 48px 24px;
+            color: #bbb;
+            font-size: 14px;
+        }
+        body.has-background .history-empty {
+            color: rgba(255,255,255,0.25);
+        }
+        .btn-view-history {
+            font-size: 11px;
+            color: #4a90d9;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 4px;
+            transition: background 0.12s;
+        }
+        .btn-view-history:hover { background: rgba(74,144,217,0.1); }
+        body.has-background .btn-view-history {
+            color: rgba(120,180,255,0.75);
+        }
     </style>
 </head>
 <body>
@@ -1436,8 +1695,11 @@
 
             <div class="records-card">
                 <div class="records-header">
-                    <h3>记录</h3>
-                    <button class="btn-clear" id="btnClearRecords">清空</button>
+                    <h3>今日记录</h3>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <button class="btn-view-history" id="btnViewHistory">全部历史</button>
+                        <button class="btn-clear" id="btnClearRecords">清空</button>
+                    </div>
                 </div>
                 <div class="records-list" id="recordsList"></div>
             </div>
@@ -1447,6 +1709,22 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<div class="history-overlay" id="historyOverlay">
+    <div class="history-drawer" id="historyDrawer">
+        <div class="history-drawer-header">
+            <h2>全部历史记录</h2>
+            <button class="btn-close-history" id="btnCloseHistory">&#x2715;</button>
+        </div>
+        <div class="history-filter-bar">
+            <span class="history-filter-label">日期</span>
+            <input type="date" class="history-date-input" id="historyDateInput">
+            <button class="btn-history-filter" id="btnHistoryFilter">筛选</button>
+            <button class="btn-history-all" id="btnHistoryAll">全部</button>
+        </div>
+        <div class="history-body" id="historyBody"></div>
+    </div>
+</div>
 
 <script>
     // SUPABASE
@@ -2355,6 +2633,102 @@
         renderMaterialCounter();
     });
 
+
+    // HISTORY DRAWER
+    const historyOverlay = document.getElementById('historyOverlay');
+    const historyBody = document.getElementById('historyBody');
+    const historyDateInput = document.getElementById('historyDateInput');
+
+    function openHistoryDrawer(filterDate) {
+        historyDateInput.value = filterDate || '';
+        renderHistoryBody(filterDate || null);
+        historyOverlay.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeHistoryDrawer() {
+        historyOverlay.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    function renderHistoryBody(filterDate) {
+        let filtered = filterDate ? records.filter(r => r.date === filterDate) : [...records];
+        filtered = filtered.slice().sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+
+        if (filtered.length === 0) {
+            historyBody.innerHTML = `<div class="history-empty">${filterDate ? '该日期暂无记录' : '暂无任何历史记录'}</div>`;
+            return;
+        }
+
+        const byDate = {};
+        filtered.forEach(r => {
+            if (!byDate[r.date]) byDate[r.date] = [];
+            byDate[r.date].push(r);
+        });
+
+        const sortedDates = Object.keys(byDate).sort((a, b) => b.localeCompare(a));
+        historyBody.innerHTML = '';
+
+        sortedDates.forEach(date => {
+            const dayRecs = byDate[date];
+            const dayTotal = dayRecs.reduce((s, r) => s + r.seconds, 0);
+            const group = document.createElement('div');
+            group.className = 'history-day-group';
+
+            const today = getTodayStr();
+            const yesterday = (() => {
+                const d = new Date(); d.setDate(d.getDate() - 1);
+                return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+            })();
+            let dateLabel = date;
+            if (date === today) dateLabel = '今天 · ' + date;
+            else if (date === yesterday) dateLabel = '昨天 · ' + date;
+
+            const titleEl = document.createElement('div');
+            titleEl.className = 'history-day-title';
+            titleEl.innerHTML = `<span>${escapeHtml(dateLabel)}</span><span class="history-day-total">${formatDur(dayTotal)}</span>`;
+            group.appendChild(titleEl);
+
+            dayRecs.forEach(r => {
+                const el = document.createElement('div');
+                el.className = 'history-record-item';
+                const st = new Date(r.startTime);
+                const tm = `${String(st.getHours()).padStart(2,'0')}:${String(st.getMinutes()).padStart(2,'0')}`;
+                el.innerHTML = `
+                    <div class="history-record-dot"></div>
+                    <div class="history-record-info">
+                        <div class="history-record-name">${escapeHtml(r.objectName)}</div>
+                        <div class="history-record-meta">${tm}</div>
+                        ${r.note ? `<div class="history-record-note">${escapeHtml(r.note)}</div>` : ''}
+                    </div>
+                    <div class="history-record-dur">${formatDur(r.seconds)}</div>
+                `;
+                group.appendChild(el);
+            });
+
+            historyBody.appendChild(group);
+        });
+    }
+
+    document.getElementById('btnViewHistory').addEventListener('click', () => openHistoryDrawer(null));
+    document.getElementById('btnCloseHistory').addEventListener('click', closeHistoryDrawer);
+    document.getElementById('btnHistoryFilter').addEventListener('click', () => {
+        const d = historyDateInput.value;
+        renderHistoryBody(d || null);
+    });
+    document.getElementById('btnHistoryAll').addEventListener('click', () => {
+        historyDateInput.value = '';
+        renderHistoryBody(null);
+    });
+    historyDateInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') renderHistoryBody(historyDateInput.value || null);
+    });
+    historyOverlay.addEventListener('click', (e) => {
+        if (e.target === historyOverlay) closeHistoryDrawer();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeHistoryDrawer();
+    });
 
     // INIT
     displayCurrentDate();
