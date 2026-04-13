@@ -1002,6 +1002,99 @@
             font-weight: 500;
             color: #333;
         }
+
+        .quick-start-divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 20px 0 16px;
+            color: #ccc;
+            font-size: 12px;
+        }
+
+        .quick-start-divider::before,
+        .quick-start-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e8e8e8;
+        }
+
+        body.has-background .quick-start-divider {
+            color: rgba(255,255,255,0.3);
+        }
+
+        body.has-background .quick-start-divider::before,
+        body.has-background .quick-start-divider::after {
+            background: rgba(255,255,255,0.15);
+        }
+
+        .btn-quick-start {
+            width: 100%;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, #ff7043 0%, #f4511e 100%);
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.22s;
+            box-shadow: 0 4px 16px rgba(244, 81, 30, 0.3);
+            font-family: inherit;
+            letter-spacing: 0.2px;
+        }
+
+        .btn-quick-start:hover {
+            background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(244, 81, 30, 0.4);
+        }
+
+        .btn-quick-start:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(244, 81, 30, 0.3);
+        }
+
+        .btn-quick-start:disabled {
+            background: linear-gradient(135deg, #ffb39a 0%, #ffab91 100%);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .quick-start-icon {
+            font-size: 17px;
+        }
+
+        .quick-countdown-bar {
+            width: 100%;
+            height: 4px;
+            background: #f0f0f0;
+            border-radius: 2px;
+            margin-top: 16px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .quick-countdown-bar.active {
+            display: block;
+        }
+
+        .quick-countdown-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff7043, #f4511e);
+            border-radius: 2px;
+            transition: width 1s linear;
+        }
+
+        body.has-background .quick-countdown-bar {
+            background: rgba(255,255,255,0.15);
+        }
     </style>
 </head>
 <body>
@@ -1059,6 +1152,19 @@
                 </div>
                 <div class="session-note-area">
                     <textarea class="session-note-input" id="sessionNote" rows="2" placeholder="记录本次专注内容（可选）…"></textarea>
+                </div>
+
+                <div class="quick-start-divider">
+                    <span>或</span>
+                </div>
+
+                <button class="btn-quick-start" id="btnQuickStart">
+                    <span class="quick-start-icon">⚡</span>
+                    随便开始（5分钟）
+                </button>
+
+                <div class="quick-countdown-bar" id="quickCountdownBar">
+                    <div class="quick-countdown-fill" id="quickCountdownFill" style="width: 100%;"></div>
                 </div>
             </div>
         </div>
@@ -1354,6 +1460,32 @@
     const btnStop = document.getElementById('btnStop');
 
     function startTimer() {
+        if (quickMode) {
+            if (isRunning) {
+                pauseTimer();
+            } else {
+                isRunning = true;
+                timerInterval = setInterval(() => {
+                    quickRemaining--;
+                    elapsedSeconds++;
+                    timerDisplay.textContent = formatTimer(quickRemaining);
+                    if (quickRemaining <= 0) {
+                        clearInterval(timerInterval);
+                        isRunning = false;
+                        showQuickEndModal();
+                    }
+                }, 1000);
+                timerDisplay.classList.add('running');
+                btnStart.textContent = '暂停';
+                btnStart.classList.remove('btn-start');
+                btnStart.classList.add('btn-pause');
+                requestAnimationFrame(() => {
+                    quickFill.style.transition = `width ${quickRemaining}s linear`;
+                    quickFill.style.width = '0%';
+                });
+            }
+            return;
+        }
         if (!activeObjectId) { showToast('请先选择一个事项'); return; }
         if (isRunning) { pauseTimer(); return; }
         isRunning = true;
@@ -1375,9 +1507,20 @@
         btnStart.textContent = '继续';
         btnStart.classList.remove('btn-pause');
         btnStart.classList.add('btn-start');
+        if (quickMode) {
+            quickFill.style.transition = 'none';
+            const pct = (quickRemaining / QUICK_DURATION) * 100;
+            quickFill.style.width = `${pct}%`;
+        }
     }
 
     function stopTimer() {
+        if (quickMode) {
+            clearInterval(timerInterval);
+            isRunning = false;
+            showQuickEndModal();
+            return;
+        }
         if (elapsedSeconds === 0) return;
         const obj = focusObjects.find(o => o.id === activeObjectId);
         const note = document.getElementById('sessionNote').value.trim();
@@ -1547,6 +1690,146 @@
     document.body.addEventListener('touchmove', (e) => {
         window.scrollTo(tsl + (tsx - e.touches[0].pageX) * 1.5, 0);
     }, { passive: true });
+
+    // QUICK START
+    const QUICK_DURATION = 5 * 60;
+    let quickMode = false;
+    let quickRemaining = 0;
+    let quickInterval = null;
+
+    const btnQuickStart = document.getElementById('btnQuickStart');
+    const quickBar = document.getElementById('quickCountdownBar');
+    const quickFill = document.getElementById('quickCountdownFill');
+
+    function startQuickTimer() {
+        if (isRunning) { showToast('请先停止当前计时'); return; }
+
+        quickMode = true;
+        quickRemaining = QUICK_DURATION;
+        isRunning = true;
+        sessionStartTime = new Date();
+
+        activeObjectId = '__quick__';
+        document.getElementById('timerObjectName').textContent = '启动中';
+
+        quickBar.classList.add('active');
+        quickFill.style.transition = 'none';
+        quickFill.style.width = '100%';
+
+        btnQuickStart.disabled = true;
+        btnStart.disabled = true;
+
+        timerDisplay.textContent = formatTimer(quickRemaining);
+        timerDisplay.classList.add('running');
+        btnStart.textContent = '暂停';
+        btnStart.classList.remove('btn-start');
+        btnStart.classList.add('btn-pause');
+
+        requestAnimationFrame(() => {
+            quickFill.style.transition = `width ${quickRemaining}s linear`;
+            quickFill.style.width = '0%';
+        });
+
+        timerInterval = setInterval(() => {
+            quickRemaining--;
+            elapsedSeconds++;
+            timerDisplay.textContent = formatTimer(quickRemaining);
+
+            if (quickRemaining <= 0) {
+                clearInterval(timerInterval);
+                isRunning = false;
+                showQuickEndModal();
+            }
+        }, 1000);
+
+        showToast('5分钟倒计时开始！');
+    }
+
+    function cancelQuickMode() {
+        quickMode = false;
+        activeObjectId = null;
+        quickRemaining = 0;
+        quickBar.classList.remove('active');
+        quickFill.style.transition = 'none';
+        quickFill.style.width = '100%';
+        btnQuickStart.disabled = false;
+        btnStart.disabled = false;
+        timerDisplay.classList.remove('running');
+        btnStart.textContent = '开始';
+        btnStart.classList.remove('btn-pause');
+        btnStart.classList.add('btn-start');
+        document.getElementById('timerObjectName').textContent = '选择一个事项开始';
+    }
+
+    function showQuickEndModal() {
+        clearInterval(timerInterval);
+        timerDisplay.classList.remove('running');
+        timerDisplay.textContent = '00:00';
+        quickBar.classList.remove('active');
+
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.innerHTML = `
+            <div class="modal-box">
+                <div class="modal-title" style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:22px;">⏱️</span> 5分钟到了！
+                </div>
+                <div class="modal-body">你已经启动了！现在要继续深入，还是先记录这次？</div>
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                    <button id="qsModalContinue" class="btn-modal-primary" style="width:100%;padding:12px;font-size:14px;">
+                        继续专注 → 选择正式事项
+                    </button>
+                    <button id="qsModalStop" class="btn-modal-secondary" style="width:100%;padding:12px;font-size:14px;">
+                        停止并记录这次
+                    </button>
+                </div>
+            </div>
+        `;
+
+        overlay.querySelector('#qsModalContinue').addEventListener('click', () => {
+            document.body.removeChild(overlay);
+            const seconds = elapsedSeconds;
+            elapsedSeconds = 0;
+            sessionStartTime = null;
+            quickMode = false;
+            quickBar.classList.remove('active');
+            btnQuickStart.disabled = false;
+            btnStart.disabled = false;
+            activeObjectId = null;
+            document.getElementById('timerObjectName').textContent = '选择一个事项开始';
+            timerDisplay.textContent = '00:00:00';
+            btnStart.textContent = '开始';
+            btnStart.classList.remove('btn-pause');
+            btnStart.classList.add('btn-start');
+            renderObjectsList();
+            showToast('请选择事项继续计时');
+        });
+
+        overlay.querySelector('#qsModalStop').addEventListener('click', () => {
+            document.body.removeChild(overlay);
+            const dur = elapsedSeconds;
+            records.unshift({
+                id: Date.now().toString(),
+                objectId: '__quick__',
+                objectName: '启动中',
+                seconds: dur,
+                note: '快速启动记录',
+                startTime: sessionStartTime ? sessionStartTime.toISOString() : new Date().toISOString(),
+                date: getTodayStr()
+            });
+            saveRecords();
+            elapsedSeconds = 0;
+            sessionStartTime = null;
+            cancelQuickMode();
+            renderRecords();
+            updateTotalDisplay();
+            showToast(`已记录 ${formatDur(dur)}`);
+        });
+
+        document.body.appendChild(overlay);
+    }
+
+    btnQuickStart.addEventListener('click', startQuickTimer);
 
     // INIT
     displayCurrentDate();
